@@ -1,0 +1,16 @@
+{
+  "name": "preprocess_data_consumer",
+  "version": "1.0.0",
+  "description": "Preprocess data consumer",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "keywords": [],
+  "author": "José Rafael <jrs9@cin.ufpe.br>",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.345.0",
+    "sqs-consumer": "^7.1.0"
+  }
+}
