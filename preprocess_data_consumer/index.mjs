@@ -1,14 +1,18 @@
+import 'dotenv/config'
 import { Consumer } from 'sqs-consumer';
 import { SQSClient } from '@aws-sdk/client-sqs';
 import { preprocess } from './preprocess.mjs';
 
-const queueUrl = 'https://sqs.us-east-1.amazonaws.com/650730994064/simulation_read_queue';
-const region = 'us-east-1';
-
 const app = Consumer.create({
-  queueUrl,
+  queueUrl: process.env.QUEUE_URL,
   handleMessage: preprocess,
-  sqs: new SQSClient({ region })
+  sqs: new SQSClient({ 
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_KEY
+    }
+  })
 });
 
 const handleError = (err) => console.error(err.message);
