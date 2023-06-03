@@ -1,11 +1,11 @@
 import 'dotenv/config'
 import { Consumer } from 'sqs-consumer';
 import { SQSClient } from '@aws-sdk/client-sqs';
-import { preprocess } from './preprocess.mjs';
+import { handleMessage } from './handle.mjs';
 
 const app = Consumer.create({
   queueUrl: process.env.QUEUE_URL,
-  handleMessage: preprocess,
+  handleMessage,
   sqs: new SQSClient({ 
     region: process.env.AWS_REGION,
     credentials: {
