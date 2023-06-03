@@ -24,11 +24,8 @@ try:
     data.insert(0, date)
 
     df = pd.DataFrame([data], columns=['Datetime'] + config.TAGS_READ)
-    #df_json = df.to_json(orient='records')
-    # message_id = utils.publishMessageToSns(config.ARN_TOPIC, config.AWS_REGION_NAME, df_json)
-    #print(df_json)
-    #time.sleep(700)
-    df.to_csv(config.CSV_FILENAME, mode='a', header=not file_exists and interation == 0, index=False)
+    df_json = df.to_json(orient='records')
+    message_id = utils.publishMessageToSns(config.ARN_TOPIC, config.AWS_REGION_NAME, df_json)
     
     interation = interation + 1
 

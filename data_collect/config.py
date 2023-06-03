@@ -1,6 +1,6 @@
 OPC_SERVER = 'Matrikon.OPC.Simulation'
 OPC_HOST = 'localhost'
-ARN_TOPIC = 'arn:aws:sns:us-east-1:650730994064:data_read'
+ARN_TOPIC = 'arn:aws:sns:us-east-1:650730994064:simulation_read.fifo'
 AWS_REGION_NAME = 'us-east-1'
 CSV_FILENAME = 'Logs 26-05-2023.csv'
 READ_SECONDS = 1
