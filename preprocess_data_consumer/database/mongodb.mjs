@@ -16,7 +16,7 @@ export class MongoDBConnector {
 
   async insertRecord(collectionName, record) {
     try {
-      const db = this.client.db();
+      const db = this.client.db('sensor_data');
       const collection = db.collection(collectionName);
       await collection.insertOne(record);
     } catch (err) {
