@@ -1,5 +1,5 @@
 
-import { Card, Metric, Flex, DonutChart, LineChart } from "@tremor/react";
+import { Card, Metric, Flex, DonutChart, LineChart, Title } from "@tremor/react";
 import probabilityToPercent from "../../utils/probabilityToPercent";
 
 const chartdata = [
@@ -40,7 +40,10 @@ export default function LiquidLevel() {
   return (
     <Card className="h-full" decoration="top" decorationColor="indigo">
       <Flex className="h-full flex-col">
-        <Flex className="w-full h-auto"><Metric>Nível do líquido</Metric></Flex>
+        <Flex className="w-full h-auto">
+          <Metric>Nível do líquido</Metric>
+          <Title>Última Atualização: 09/09/2023 14:09:22</Title>
+        </Flex>
         <Flex className="h-full flex-row space-x-4">
           <Flex className="w-1/3">
             <DonutChart
