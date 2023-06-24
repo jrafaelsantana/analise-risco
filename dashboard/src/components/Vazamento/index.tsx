@@ -3,49 +3,40 @@ import { Card, Metric, Flex, DonutChart, LineChart, Title } from "@tremor/react"
 import probabilityToPercent from "../../utils/probabilityToPercent";
 import { useEffect, useState } from "react";
 import mlInferenceService from "../../services/mlInferenceService";
+import convertDatetime from "../../utils/convertDatetime";
 
-const chartdata = [
-  {
-    year: 1970,
-    "Export Growth Rate": 2.04,
-    "Import Growth Rate": 1.53,
-  },
-  {
-    year: 1971,
-    "Export Growth Rate": 1.96,
-    "Import Growth Rate": 1.58,
-  },
-  {
-    year: 1972,
-    "Export Growth Rate": 1.96,
-    "Import Growth Rate": 1.61,
-  },
-  {
-    year: 1973,
-    "Export Growth Rate": 1.93,
-    "Import Growth Rate": 1.61,
-  },
-  {
-    year: 1974,
-    "Export Growth Rate": 1.88,
-    "Import Growth Rate": 1.67,
-  },
-  {
-    year: 1975,
-    "Export Growth Rate": 1.88,
-    "Import Growth Rate": 1.67,
-  },
-];
+const returnColor = (prob: number) => {
+  if (prob < 0.5) {
+    return 'green';
+  } else if (prob < 0.7) {
+    return 'yellow';
+  } else {
+    return 'red';
+  }
+}
 
 export default function Vazamento() {
   const [historic, setHistoric] = useState<any[]>([]);
-  const [current, setCurrent] = useState<any[]>([{ probability: 0 }]);
+  const [current, setCurrent] = useState<any[]>([{ Probabilidade: 0 }]);
+  const [lastUpdate, setLastUpdate] = useState<string>();
+  const [color, setColor] = useState<"green"|"yellow"|"red">("green");
 
   useEffect(() => {
     const fetchData= async () => {
       try {
         const result = await mlInferenceService.vazamento();
-        setHistoric(prevData => [...prevData.slice(-50), result]);
+
+        if (result) {
+          const datetime = convertDatetime(result['datetime']);
+          result['time'] = datetime.toLocaleTimeString('pt-BR');
+          result['Probabilidade'] = result['probability'];
+          setLastUpdate(datetime.toLocaleString('pt-BR').replace(',', ''));
+          setColor(returnColor(result['probability']));
+
+          delete result['probability'];
+        }
+
+        setHistoric(prevData => [...prevData.slice(-10), result]);
         setCurrent([result]);
       } catch (error) {
         console.log('Ocorreu um erro', error);
@@ -61,7 +52,7 @@ export default function Vazamento() {
       <Flex className="h-full flex-col">
         <Flex className="w-full h-auto">
           <Metric>Vazamento</Metric>
-          <Title>Última Atualização: 09/09/2023 14:09:22</Title>
+          {lastUpdate && <Title>Última Atualização: {lastUpdate}</Title>}
         </Flex>
         <Flex className="h-full flex-row space-x-4">
           <Flex className="w-1/3">
@@ -69,17 +60,17 @@ export default function Vazamento() {
               valueFormatter={probabilityToPercent}
               data={current}
               showTooltip={false}
-              category="probability"
-              colors={["red"]}
+              category="Probabilidade"
+              colors={[color]}
             />
           </Flex>
           <Flex className="w-full">
             <LineChart
               className="w-full"
-              data={chartdata}
-              index="year"
-              categories={["Export Growth Rate", "Import Growth Rate"]}
-              colors={["emerald", "gray"]}
+              data={historic}
+              index="time"
+              categories={["Probabilidade"]}
+              colors={["emerald"]}
               valueFormatter={probabilityToPercent}
               yAxisWidth={40}
             />
