@@ -1,6 +1,5 @@
 import os
 import joblib
-from sklearn.preprocessing import MinMaxScaler
 import torch
 import numpy as np
 import pandas as pd
@@ -11,6 +10,9 @@ from pathlib import Path
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
+from datetime import datetime, timedelta
+import json
+from bson import ObjectId
 
 load_dotenv()
 MONGODB_URI = os.getenv('MONGODB_URI')
@@ -28,6 +30,7 @@ def after_request(response):
 mongoClient = MongoClient(MONGODB_URI)
 sensorDataDb = mongoClient.sensor_data
 historicTable = sensorDataDb.historic
+alertTable = sensorDataDb.alerts
 
 liquid_level_model = LiquidLevelNet(51)  # TODO: Refactor to pass num_features
 liquid_level_model.load_state_dict(torch.load(Path('./models/liquid_level', 'model.pt')))
@@ -74,6 +77,13 @@ vazamento_blocked_features = [
   'Tubo.S28.P',
   'Tubo.S28.W',
 ]
+
+def serialize_obj(obj):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(repr(obj) + " is not JSON serializable")
 
 @app.route('/liquid_level', methods=['GET'])
 def predict_liquid_level():
@@ -124,6 +134,16 @@ def predict_vazamento():
     'class': np.around(output.item())
   })
 
+@app.route('/alerts', methods=['GET'])
+def alerts():
+  limite_tempo = datetime.now() - timedelta(hours=1)
+  query = {"lastViewed": {"$gt": limite_tempo}}
+
+  lastRecords = alertTable.find(query).sort('lastViewed', -1 ).limit(5)
+  listLastRecords = list(lastRecords)
+  jsonListLastRecords = json.dumps(listLastRecords, default=serialize_obj)
+    
+  return { "alerts": json.loads(jsonListLastRecords) }
 
 if __name__ == '__main__':
   app.run()

@@ -8,13 +8,13 @@ export default function Dashboard() {
     <main className="p-10 h-screen">
       <Grid numItemsLg={7} className="gap-10 h-full">
         <Col numColSpanLg={5}>
-         <div className="grid gap-10 h-full">
-            <LiquidLevel/>
-            <Vazamento/>
+          <div className="grid gap-10 h-full">
+            <LiquidLevel />
+            <Vazamento />
           </div>
         </Col>
         <Col numColSpanLg={2}>
-          <Alerts/>
+          <Alerts />
         </Col>
       </Grid>
     </main>
