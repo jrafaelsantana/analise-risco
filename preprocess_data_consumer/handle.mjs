@@ -1,24 +1,91 @@
 import { MongoDBConnector } from "./database/mongodb.mjs";
 
 const saveHistoric = async (connector, data) => {
-  await connector.insertRecord('historic', data);
-}
+  await connector.insertRecord("historic", data);
+};
 
-const saveAlert = async (connector, message) => {
-  const alert = { message };
-  await connector.insertRecord('alerts', alert);
-}
+const saveAlert = async (connector, alert) => {
+  const now = new Date();
+  const tenSecondsAgo = new Date(now.getTime() - 30000);
+
+  const query = {
+    message: alert.message,
+    sensors: { $all: alert.sensors },
+    lastViewed: { $gte: tenSecondsAgo, $lt: now },
+  };
+
+  const find = await connector.findOne("alerts", query);
+
+  if (!find) {
+    await connector.insertRecord("alerts", alert);
+  } else {
+    find.lastViewed = new Date();
+
+    await connector.updateOne("alerts", find._id, { $set: find });
+  }
+};
 
 const preprocess = async (connector, data) => {
-  // TODO: Implement rules scheme
+  const isTransmissorEquals = (...args) =>
+    (Math.max(...args) - Math.min(...args)).toFixed(2) <= 0.02;
+
   if (
-    data['Transmissor.TR1.OUT'] - data['Transmissor.TR2.OUT'] >= 0.02 ||
-    data['Transmissor.TR2.OUT'] - data['Transmissor.TR3.OUT'] >= 0.02 ||
-    data['Transmissor.TR1.OUT'] - data['Transmissor.TR3.OUT'] >= 0.02
+    isTransmissorEquals(
+      data["Transmissor.TR1.OUT"],
+      data["Transmissor.TR2.OUT"]
+    )
   ) {
-    await saveAlert(connector, 'Transmissores com leituras diferentes.');
+    const alert = {
+      datetime: new Date(),
+      lastViewed: new Date(),
+      message: "Transmissores com leituras diferentes.",
+      sensors: ["Transmissor.TR1.OUT", "Transmissor.TR2.OUT"],
+      data: {
+        "Transmissor.TR1.OUT": data["Transmissor.TR1.OUT"],
+        "Transmissor.TR2.OUT": data["Transmissor.TR2.OUT"],
+      },
+    };
+    await saveAlert(connector, alert);
   }
-}
+
+  if (
+    isTransmissorEquals(
+      data["Transmissor.TR2.OUT"],
+      data["Transmissor.TR3.OUT"]
+    )
+  ) {
+    const alert = {
+      datetime: new Date(),
+      lastViewed: new Date(),
+      message: "Transmissores com leituras diferentes.",
+      sensors: ["Transmissor.TR2.OUT", "Transmissor.TR3.OUT"],
+      data: {
+        "Transmissor.TR2.OUT": data["Transmissor.TR2.OUT"],
+        "Transmissor.TR3.OUT": data["Transmissor.TR3.OUT"],
+      },
+    };
+    await saveAlert(connector, alert);
+  }
+
+  if (
+    isTransmissorEquals(
+      data["Transmissor.TR1.OUT"],
+      data["Transmissor.TR3.OUT"]
+    )
+  ) {
+    const alert = {
+      datetime: new Date(),
+      lastViewed: new Date(),
+      message: "Transmissores com leituras diferentes.",
+      sensors: ["Transmissor.TR1.OUT", "Transmissor.TR3.OUT"],
+      data: {
+        "Transmissor.TR1.OUT": data["Transmissor.TR1.OUT"],
+        "Transmissor.TR3.OUT": data["Transmissor.TR3.OUT"],
+      },
+    };
+    await saveAlert(connector, alert);
+  }
+};
 
 export const handleMessage = async (message) => {
   const connector = new MongoDBConnector(process.env.MONGODB_URI);
@@ -31,4 +98,4 @@ export const handleMessage = async (message) => {
   await preprocess(connector, data);
 
   connector.close();
-}
+};
