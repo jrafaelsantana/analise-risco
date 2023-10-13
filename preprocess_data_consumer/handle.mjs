@@ -6,12 +6,12 @@ const saveHistoric = async (connector, data) => {
 
 const saveAlert = async (connector, alert) => {
   const now = new Date();
-  const tenSecondsAgo = new Date(now.getTime() - 30000);
+  const secondsAgo = new Date(now.getTime() - 30000);
 
   const query = {
     message: alert.message,
     sensors: { $all: alert.sensors },
-    lastViewed: { $gte: tenSecondsAgo, $lt: now },
+    lastViewed: { $gte: secondsAgo, $lt: now },
   };
 
   const find = await connector.findOne("alerts", query);
@@ -30,7 +30,7 @@ const preprocess = async (connector, data) => {
     (Math.max(...args) - Math.min(...args)).toFixed(2) <= 0.02;
 
   if (
-    isTransmissorEquals(
+    !isTransmissorEquals(
       data["Transmissor.TR1.OUT"],
       data["Transmissor.TR2.OUT"]
     )
@@ -49,7 +49,7 @@ const preprocess = async (connector, data) => {
   }
 
   if (
-    isTransmissorEquals(
+    !isTransmissorEquals(
       data["Transmissor.TR2.OUT"],
       data["Transmissor.TR3.OUT"]
     )
@@ -68,7 +68,7 @@ const preprocess = async (connector, data) => {
   }
 
   if (
-    isTransmissorEquals(
+    !isTransmissorEquals(
       data["Transmissor.TR1.OUT"],
       data["Transmissor.TR3.OUT"]
     )
@@ -94,8 +94,10 @@ export const handleMessage = async (message) => {
   const messageBody = JSON.parse(message.Body);
   const data = JSON.parse(messageBody.Message)[0];
 
-  await saveHistoric(connector, data);
-  await preprocess(connector, data);
+  await Promise.all([
+    saveHistoric(connector, data),
+    preprocess(connector, data),
+  ]);
 
   connector.close();
 };

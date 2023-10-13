@@ -32,7 +32,7 @@ sensorDataDb = mongoClient.sensor_data
 historicTable = sensorDataDb.historic
 alertTable = sensorDataDb.alerts
 
-liquid_level_model = LiquidLevelNet(51)  # TODO: Refactor to pass num_features
+liquid_level_model = LiquidLevelNet(66)  # TODO: Refactor to pass num_features
 liquid_level_model.load_state_dict(torch.load(Path('./models/liquid_level', 'model.pt')))
 liquid_level_model.eval()
 liquid_level_scaler = joblib.load(Path('./models/liquid_level', 'scaler.gz'))
@@ -95,7 +95,7 @@ def predict_liquid_level():
 
   df = df.drop('_id', axis=1)
   df = df.drop('Datetime', axis=1)
-  df = df.drop(liquid_level_blocked_features, axis=1)
+  #df = df.drop(liquid_level_blocked_features, axis=1)
   
   df['Target'] = 0
   df = pd.DataFrame(liquid_level_scaler.transform(df), index=df.index, columns=df.columns)
@@ -142,6 +142,8 @@ def alerts():
   lastRecords = alertTable.find(query).sort('lastViewed', -1 ).limit(5)
   listLastRecords = list(lastRecords)
   jsonListLastRecords = json.dumps(listLastRecords, default=serialize_obj)
+
+  print(jsonListLastRecords)
     
   return { "alerts": json.loads(jsonListLastRecords) }
 
