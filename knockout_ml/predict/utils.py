@@ -23,6 +23,9 @@ def convert_to_seconds(arr, scaler, columns_names):
   final_arr = scaler.inverse_transform(new_array)
   return round(final_arr[0, -1])
 
+def convert_to_plot_data(arr, scaler, columns_names):
+  return []
+
 def scale_values(df, scaler):
   df_scaled = pd.DataFrame(
         scaler.transform(df),

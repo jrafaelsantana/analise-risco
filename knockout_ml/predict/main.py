@@ -3,7 +3,7 @@ import zmq
 import tensorflow as tf
 import joblib
 from exceptions import SocketClosedError
-from utils import convert_to_input, convert_to_seconds, handle_message
+from utils import convert_to_input, convert_to_plot_data, convert_to_seconds, handle_message
 from config import COLUMNS_NAMES_LEVEL, COLUMNS_NAMES_SECONDS
 
 def predict_seconds(data, model, scaler):
@@ -14,7 +14,11 @@ def predict_seconds(data, model, scaler):
     return seconds
 
 def predict_level(data, model, scaler):
-    return 0.5
+    input = convert_to_input(data, scaler, COLUMNS_NAMES_LEVEL)
+    predict = model.predict(input).flatten()
+    plot_data = convert_to_plot_data(predict, scaler, COLUMNS_NAMES_LEVEL)
+
+    return plot_data
 
 def close_connection(socket, context):
     socket.close()
@@ -40,8 +44,8 @@ if __name__ == '__main__':
             data = handle_message(message)
             print("Received request")
 
-            # seconds = predict_seconds(data, lstm_seconds_model, scaler_seconds)
-            # level = predict_seconds(data, lstm_level_model, scaler_level)
+            seconds = predict_seconds(data, lstm_seconds_model, scaler_seconds)
+            level = predict_level(data, lstm_level_model, scaler_level)
 
             time.sleep(1)
 
