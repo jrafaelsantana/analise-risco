@@ -2,28 +2,55 @@ import time
 import zmq
 import tensorflow as tf
 import joblib
-from utils import convert_to_input, convert_to_seconds
+from exceptions import SocketClosedError
+from utils import convert_to_input, convert_to_seconds, handle_message
+from config import COLUMNS_NAMES_LEVEL, COLUMNS_NAMES_SECONDS
 
-print("Starting inference model...")
-context = zmq.Context()
-socket = context.socket(zmq.REP)
-socket.bind("tcp://*:5555")
+def predict_seconds(data, model, scaler):
+    input = convert_to_input(data, scaler, COLUMNS_NAMES_SECONDS)
+    predict = model.predict(input).flatten()
+    seconds = convert_to_seconds(predict, scaler, COLUMNS_NAMES_SECONDS)
 
-print("Loading model...")
-lstm_model = tf.keras.models.load_model('../model/model.hdf5')
+    return seconds
 
-print("Loading scaler...")
-scaler = joblib.load('../model/scaler.gz')
+def predict_level(data, model, scaler):
+    return 0.5
 
-while True:
-    message = socket.recv_pyobj()
-    print("Received request")
+def close_connection(socket, context):
+    socket.close()
+    context.term()
 
-    input = convert_to_input(message, scaler)
-    predict = lstm_model.predict(input).flatten()
-    seconds = convert_to_seconds(predict, scaler)
+if __name__ == '__main__':
+    print("Starting inferences models...")
+    context = zmq.Context()
+    socket = context.socket(zmq.REP)
+    socket.bind("tcp://*:5555")
 
-    print(seconds)
-    time.sleep(1)
+    print("Loading models...")
+    lstm_seconds_model = tf.keras.models.load_model('../model/model_seconds.hdf5')
+    lstm_level_model = tf.keras.models.load_model('../model/model_level.hdf5')
 
-    socket.send(b"Ok")
+    print("Loading scalers...")
+    scaler_seconds = joblib.load('../model/scaler_seconds.gz')
+    scaler_level = joblib.load('../model/scaler_level.gz')
+
+    while True:
+        try:
+            message = socket.recv_pyobj()
+            data = handle_message(message)
+            print("Received request")
+
+            # seconds = predict_seconds(data, lstm_seconds_model, scaler_seconds)
+            # level = predict_seconds(data, lstm_level_model, scaler_level)
+
+            time.sleep(1)
+
+            socket.send(b"Ok")
+        except SocketClosedError:
+            close_connection(socket, context)
+            print("Killed.")
+            exit()
+        except:
+            socket.send(b"CLOSE_SOCKET")
+            close_connection(socket, context)
+            exit()
