@@ -2,6 +2,7 @@ import time
 import zmq
 import tensorflow as tf
 import joblib
+import traceback
 from exceptions import SocketClosedError
 from utils import convert_to_input, convert_to_plot_data, convert_to_seconds, handle_message
 from config import COLUMNS_NAMES_LEVEL, COLUMNS_NAMES_SECONDS
@@ -13,12 +14,12 @@ def predict_seconds(data, model, scaler):
 
     return seconds
 
-def predict_level(data, model, scaler):
+def predict_level(data, model, scaler, buffer):
     input = convert_to_input(data, scaler, COLUMNS_NAMES_LEVEL)
     predict = model.predict(input).flatten()
-    plot_data = convert_to_plot_data(predict, scaler, COLUMNS_NAMES_LEVEL)
+    plot_data, buffer = convert_to_plot_data(data, buffer, predict, scaler, COLUMNS_NAMES_LEVEL)
 
-    return plot_data
+    return plot_data, buffer
 
 def close_connection(socket, context):
     socket.close()
@@ -38,6 +39,8 @@ if __name__ == '__main__':
     scaler_seconds = joblib.load('../model/scaler_seconds.gz')
     scaler_level = joblib.load('../model/scaler_level.gz')
 
+    buffer_level = { "real": [], "predicted": [] }
+
     while True:
         try:
             message = socket.recv_pyobj()
@@ -45,7 +48,7 @@ if __name__ == '__main__':
             print("Received request")
 
             seconds = predict_seconds(data, lstm_seconds_model, scaler_seconds)
-            level = predict_level(data, lstm_level_model, scaler_level)
+            level, buffer_level = predict_level(data, lstm_level_model, scaler_level, buffer_level)
 
             time.sleep(1)
 
@@ -56,5 +59,6 @@ if __name__ == '__main__':
             exit()
         except:
             socket.send(b"CLOSE_SOCKET")
+            traceback.print_exc()
             close_connection(socket, context)
             exit()
