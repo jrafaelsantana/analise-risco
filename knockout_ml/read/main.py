@@ -30,8 +30,8 @@ if __name__ == '__main__':
             data = [tag[1] for tag in read_opc]
             buffer.append(data)
             
-            if len(buffer) >= 30:
-                socket.send_pyobj(buffer[-30:])
+            if len(buffer) >= 15:
+                socket.send_pyobj(buffer[-15:])
 
                 message = socket.recv()
                 received = handle_message(message)

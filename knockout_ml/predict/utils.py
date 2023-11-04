@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from config import TAGS_READ
 from exceptions import SocketClosedError
 
 def convert_to_df(arr, columns_names):
@@ -24,35 +23,17 @@ def convert_to_seconds(arr, scaler, columns_names):
   final_arr = scaler.inverse_transform(new_array)
   return round(final_arr[0, -1])
 
-def convert_to_plot_data(real_data, buffer, predicted_data, scaler, columns_names):
-  # Inverse scale
-  real_data = convert_to_df(real_data, TAGS_READ)
+def convert_to_plot_data(buffer_map, buffer_data, predicted_data_scaled):
+  buffer_map["real"][:15] = buffer_data['Variaveis.VOTACAO_TRANSMISSORES'].tail(15).to_numpy()
+  
+  buffer_map["predicted"] = np.append(buffer_map["predicted"], np.nan)
+  buffer_map["predicted"][-15:] = predicted_data_scaled
+  buffer_map["predicted"] = buffer_map["predicted"][-30:]
 
-  predicted_data_scaled = np.zeros((predicted_data.shape[0], 7))
-  predicted_data_scaled[:, -1] = predicted_data[0]
-  predicted_data_scaled = pd.DataFrame(predicted_data_scaled, columns=columns_names + ['Label'])
-  predicted_data_scaled = scaler.inverse_transform(predicted_data_scaled)
-  predicted_data_scaled = predicted_data_scaled[:, -1]
-
-  if len(buffer["predicted"]) == 0 and len(buffer["real"]) == 0:
-    # Inicio do plot
-    buffer["real"] = real_data['Drum.V1.L'].tail(15).to_numpy()
-    buffer["predicted"] = np.empty(30)
-    buffer["predicted"][-15:] = predicted_data_scaled[15:]
-  else:
-    # Atualizacao do plot
-    buffer["real"] = real_data['Drum.V1.L'].tail(15).to_numpy()
-    buffer["predicted"] = np.append(buffer["predicted"], [0])
-    buffer["predicted"][-15:] = predicted_data_scaled[15:]
-    buffer["predicted"] = buffer["predicted"][-30:]
-
-  print(buffer["real"])
-  print(buffer["predicted"])
-  print(buffer["real"].shape)
-  print(buffer["predicted"].shape)
-  print('-----------------------')
-
-  return [], buffer
+  print(buffer_map["real"])
+  print(buffer_map["predicted"])
+  
+  return buffer_map
 
 def scale_values(df, scaler):
   df_scaled = pd.DataFrame(

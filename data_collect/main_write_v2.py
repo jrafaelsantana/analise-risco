@@ -21,7 +21,7 @@ def init_simulation():
   return ((H2O_QTD, 1.0))
 
 def control_h2o():
-  return random.uniform(0.5, 4.0)
+  return random.uniform(0.8, 4.0)
 
 def control_ruido_1():
   if random.random() < 0.02:
@@ -53,7 +53,7 @@ try:
     data_send = {}
 
     # Controle quantidade de liquido
-    if count_h2o == 160:
+    if count_h2o == 20:
       data_send[H2O_QTD] = control_h2o()
       count_h2o = 0
     else:
