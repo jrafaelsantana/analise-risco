@@ -3,7 +3,7 @@ import numpy as np
 from exceptions import SocketClosedError
 
 def convert_to_df(arr, columns_names):
-  return pd.DataFrame(arr, columns=columns_names)
+  return arredondar_dataframe(pd.DataFrame(arr, columns=columns_names))
 
 def convert_to_input(arr, scaler, columns_names):
   df = convert_to_df(arr, columns_names)
@@ -24,14 +24,11 @@ def convert_to_seconds(arr, scaler, columns_names):
   return round(final_arr[0, -1])
 
 def convert_to_plot_data(buffer_map, buffer_data, predicted_data_scaled):
-  buffer_map["real"][:15] = buffer_data['Variaveis.VOTACAO_TRANSMISSORES'].tail(15).to_numpy()
+  buffer_map["real"][:15] = buffer_data['Drum.V1.L'].tail(15).to_numpy()
   
   buffer_map["predicted"] = np.append(buffer_map["predicted"], np.nan)
   buffer_map["predicted"][-15:] = predicted_data_scaled
   buffer_map["predicted"] = buffer_map["predicted"][-30:]
-
-  print(buffer_map["real"])
-  print(buffer_map["predicted"])
   
   return buffer_map
 
@@ -48,3 +45,6 @@ def handle_message(message):
     raise SocketClosedError()
   else:
     return message
+  
+def arredondar_dataframe(df, casas_decimais=5):
+    return df.round(casas_decimais)

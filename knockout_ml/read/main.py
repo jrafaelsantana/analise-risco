@@ -30,12 +30,18 @@ if __name__ == '__main__':
             data = [tag[1] for tag in read_opc]
             buffer.append(data)
             
-            if len(buffer) >= 15:
-                socket.send_pyobj(buffer[-15:])
+            if len(buffer) >= 30:
+                socket.send_pyobj(buffer[-30:])
 
-                message = socket.recv()
+                message = socket.recv_pyobj()
                 received = handle_message(message)
-                print("Received [ %s ]" % (received))
+
+                if received and len(received.items()):
+                    data_tuple = tuple(received.items())
+                    print(data_tuple)
+                    opc.write(data_tuple)
+                else:  
+                    print("Received ack")
             
             time.sleep(READ_SECONDS)
             request = request + 1
