@@ -165,11 +165,9 @@ if __name__ == '__main__':
     socket.bind("tcp://*:5555")
 
     print("Loading models...")
-    lstm_seconds_model = tf.keras.models.load_model('../model/model_seconds.hdf5')
     lstm_level_model = tf.keras.models.load_model('../model/model_level.hdf5')
 
     print("Loading scalers...")
-    scaler_seconds = joblib.load('../model/scaler_seconds.gz')
     scaler_level = joblib.load('../model/scaler_level.gz')
 
     level_x_data = list(range(-14, 16))

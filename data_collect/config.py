@@ -9,7 +9,7 @@ TAGS_READ = [
   # 'Drum.V1.L',
   # 'Drum.V1.P',
   # 'Drum.V1.T',
-  # 'Drum.V1.VOL',
+  'Drum.V1.VOL',
   # 'Source.SRC1.PB',
   # 'StreamSend.FLARE.P',
   # 'StreamSend.SAIDA_GAS.P',
@@ -71,7 +71,6 @@ TAGS_READ = [
   # 'Variaveis.TR1_RUIDO',
   # 'Variaveis.TR2_RUIDO',
   # 'Variaveis.TR3_RUIDO'
-
   'Variaveis.TR1_RUIDO',
   'Variaveis.TR2_RUIDO',
   'Variaveis.TR3_RUIDO',
@@ -196,3 +195,7 @@ TAGS_READ = [
   'Controlador.PID2.OUT',
   'Controlador.PID3.OUT'
 ]
+
+def __main__():
+  print('Configurations loaded')
+  print(len(TAGS_READ))

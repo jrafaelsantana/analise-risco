@@ -12,88 +12,78 @@ TIME_START = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 interation = 0
 
 VALVE5_OP = 'Valvula.VALVE5.OP' # Vazamento
-VALVE1_OP = 'Valvula.VALVE1.OP' # Entrada
-VALVE2_OP = 'Valvula.VALVE2.OP' # Saida
 TR1_RUIDO = 'Variaveis.TR1_RUIDO'
 TR2_RUIDO = 'Variaveis.TR2_RUIDO'
 TR3_RUIDO = 'Variaveis.TR3_RUIDO'
-VOTACAO_TRANSMISSORES = 'Variaveis.VOTACAO_TRANSMISSORES'
+H2O_QTD = 'Variaveis.H2O_QTD'
+
+MAX_INPUT = 5.1
+SHOULD_CONTROL = True
+
+LIQUIDO_ATUAL = 2.1
+ESTADO_ANTERIOR = 1.0
+TAGS_READ = ['Valvula.VALVE_SHUTOFF.L']
 
 def init_simulation():
-  return (
-    (VALVE1_OP, 1.0),
-    (VALVE2_OP, 1.0)
-  )
+  return ((H2O_QTD, LIQUIDO_ATUAL))
 
-def has_noise(tr1, tr2, tr3):
-  arr = [tr1, tr2, tr3]
-  
-  if arr.count(1) >= 2:
-    return True
-  return False
-
-def control_valve1_op():
-  if random.random() < 0.7:
-    op = 1.00
-  else:
-    op = round(random.random(), 2)
-  return op
-
-def control_valve2_op():
-  if random.random() < 0.7:
-    op = 1.00
-  else:
-    op = round(random.random(), 2)
-  return op
+def control_h2o():
+  return random.uniform(0.0, 2.0)
 
 def control_ruido_1():
-  if random.random() < 0.15:
+  if random.random() < 0.02:
     return 1
   return 0
   
 def control_ruido_2():
-  if random.random() < 0.15:
+  if random.random() < 0.02:
     return 1
   return 0
   
 def control_ruido_3():
-  if random.random() < 0.15:
+  if random.random() < 0.02:
     return 1
   return 0
 
 def control_vazamento():
-  if random.random() < 0.10:
+  if random.random() < 0.2:
     return 1
   return 0
 
 try:
   opc.write(init_simulation())
-  count_valve1 = 0
-  count_valve2 = 0
   count_ruido = 0
   count_vazamento = 0
+  count_h2o = 0
 
   while True:
+    read = opc.read(TAGS_READ)
+    valve_shutoff = [tag[1] for tag in read][0]
     data_send = {}
 
-    # Controle da valvula de entrada de gas
-    if count_valve1 == 100:
-      data_valve1 = control_valve1_op()
-      data_send[VALVE1_OP] = data_valve1
-      count_valve1 = 0
-    else:
-      count_valve1 = count_valve1 + 1
+    if SHOULD_CONTROL:
+      # Controle quantidade de liquido
+      if valve_shutoff < 1 and ESTADO_ANTERIOR == 1.0:
+        LIQUIDO_ATUAL = LIQUIDO_ATUAL + 0.5
+        data_send[H2O_QTD] = LIQUIDO_ATUAL
+        ESTADO_ANTERIOR = 0.0
 
-    # Controle da valvula de saida de gas
-    if count_valve2 == 10:
-      data_valve2 = control_valve2_op()
-      data_send[VALVE2_OP] = data_valve2
-      count_valve2 = 0
+      if valve_shutoff == 1 and ESTADO_ANTERIOR == 0:
+        ESTADO_ANTERIOR = 1.0
+      
+      if LIQUIDO_ATUAL > MAX_INPUT:
+        SHOULD_CONTROL = False
+        LIQUIDO_ATUAL = 1.0
+        data_send[H2O_QTD] = LIQUIDO_ATUAL
     else:
-      count_valve2 = count_valve2 + 1
-
+      if count_h2o == 20:
+        data_send[H2O_QTD] = control_h2o()
+        count_h2o = 0
+      else:
+        count_h2o = count_h2o + 1
+    
     # Controle do ruido
-    if count_ruido == 5:
+    if count_ruido == 10:
       data_send[TR1_RUIDO] = control_ruido_1()
       data_send[TR2_RUIDO] = control_ruido_2()
       data_send[TR3_RUIDO] = control_ruido_3()
